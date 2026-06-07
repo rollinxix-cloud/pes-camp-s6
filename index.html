@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PES LEAGUE CAMP S6</title>
+    <!-- Tailwind CSS CDN for structure -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        /* CSS VARIABLE COLOR ENGINE - ABSOLUTE CONTRAST GUARANTEE */
+        :root {
+            --bg-main: #f3f4f6;
+            --bg-card: #ffffff;
+            --border-color: #e5e7eb;
+            --text-title: #111827;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --fixture-bg: #f9fafb;
+            --fixture-border: #e5e7eb;
+            --vs-bg: #e5e7eb;
+            --vs-text: #16a34a;
+        }
+
+        html.dark, body.dark {
+            --bg-main: #0b0f19;
+            --bg-card: #111827;
+            --border-color: #1f2937;
+            --text-title: #ccff00; /* Distinct glowing neon title for dark mode */
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --fixture-bg: #1f2937;
+            --fixture-border: #374151;
+            --vs-bg: #1f2937;
+            --vs-text: #a3e635;
+        }
+
+        /* Core Application Layout Bindings */
+        body {
+            background-color: var(--bg-main) !important;
+            color: var(--text-main) !important;
+        }
+        .theme-card {
+            background-color: var(--bg-card) !important;
+            border: 1px solid var(--border-color) !important;
+        }
+        .main-title {
+            color: var(--text-title) !important;
+        }
+        .text-custom-main {
+            color: var(--text-main) !important;
+        }
+        .text-custom-muted {
+            color: var(--text-muted) !important;
+        }
+        .fixture-row {
+            background-color: var(--fixture-bg) !important;
+            border: 1px solid var(--fixture-border) !important;
+        }
+        .vs-badge {
+            background-color: var(--vs-bg) !important;
+            color: var(--vs-text) !important;
+            border: 1px solid var(--fixture-border) !important;
+        }
+        .admin-glow-bar {
+            border: 1px solid #ec4899;
+            background-color: rgba(236, 72, 153, 0.1);
+        }
+    </style>
+</head>
+<body class="dark transition-colors duration-200 font-sans min-h-screen pb-12">
+
+    <!-- TOP NAVIGATION BAR -->
+    <header class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center border-b border-gray-300 dark:border-gray-800">
+        <button onclick="toggleAdminMode()" class="px-4 py-1.5 bg-gray-700 hover:bg-gray-600 text-white text-xs font-semibold rounded-md transition cursor-pointer">
+            ⚙️ Admin Panel
+        </button>
+        <button onclick="toggleTheme()" class="px-4 py-1.5 bg-yellow-500 text-gray-900 dark:bg-gray-800 dark:text-yellow-400 text-xs font-bold rounded-full border border-yellow-600 dark:border-gray-700 transition cursor-pointer">
+            🌓 Light/Dark Mode
+        </button>
+    </header>
+
+    <!-- MAIN DASHBOARD HEADER -->
+    <div class="text-center my-8">
+        <h1 class="text-3xl md:text-4xl font-extrabold tracking-wider main-title flex justify-center items-center gap-3">
+            🎮 PES LEAGUE CAMP S6 🎮
+        </h1>
+        <p class="text-xs md:text-sm font-semibold text-custom-muted tracking-widest mt-1 uppercase">
+            Official Tournament Hub
+        </p>
+    </div>
+
+    <!-- MAIN CONTAINER -->
+    <main class="max-w-7xl mx-auto px-4 space-y-6">
+
+        <!-- ADMIN CONTROLS INTERFACE BAR -->
+        <div id="adminBar" class="hidden admin-glow-bar rounded-lg p-4 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-2">
+                <span class="bg-pink-600 text-white text-xs font-bold uppercase px-2 py-0.5 rounded animate-pulse">
+                    Admin Mode Active
+                </span>
+                <p class="text-xs text-custom-main">You can now input scores directly inside the fixture rows and update player names.</p>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="exportHtmlFile()" class="bg-yellow-500 hover:bg-yellow-400 text-gray-900 font-bold text-xs px-4 py-2 rounded shadow transition cursor-pointer">
+                    Export Entire HTML File
+                </button>
+                <button onclick="exitAdmin()" class="bg-red-600 hover:bg-red-500 text-white font-bold text-xs px-4 py-2 rounded shadow transition cursor-pointer">
+                    Exit Admin
+                </button>
+            </div>
+        </div>
+
+        <!-- LIVE REGISTRATION MANAGER (ROSTER EDITING) -->
+        <div id="rosterManager" class="hidden theme-card rounded-xl p-5 shadow-lg">
+            <h3 class="text-cyan-600 dark:text-cyan-400 font-bold text-sm mb-4 uppercase tracking-wider flex items-center gap-2">
+                📝 Live Registration Manager (Edit Roster Names)
+            </h3>
+            <div id="rosterInputsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                <!-- Roster inputs dynamically generated here -->
+            </div>
+            <div class="mt-4 flex justify-end">
+                <button onclick="saveRosterNames()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-5 py-2 rounded shadow transition cursor-pointer">
+                    Save Registered Names
+                </button>
+            </div>
+        </div>
+
+        <!-- MAIN HUB GRID LAYOUT -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <!-- LEFT COLUMN: STANDINGS TABLE -->
+            <div class="lg:col-span-7 theme-card rounded-xl p-5 shadow-xl overflow-hidden">
+                <h2 class="main-title font-black text-sm uppercase tracking-wider mb-4 flex items-center gap-2">
+                    📊 Live Table Standings
+                </h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs md:text-sm">
+                        <thead>
+                            <tr class="border-b border-gray-300 dark:border-gray-700 text-custom-muted font-bold uppercase tracking-wider">
+                                <th class="py-3 px-2 text-center w-12">Pos</th>
+                                <th class="py-3 px-3">Player Name</th>
+                                <th class="py-3 px-2 text-center">P</th>
+                                <th class="py-3 px-2 text-center">W</th>
+                                <th class="py-3 px-2 text-center">D</th>
+                                <th class="py-3 px-2 text-center">L</th>
+                                <th class="py-3 px-2 text-center">GD</th>
+                                <th class="py-3 px-2 text-center text-green-600 dark:text-green-400 font-black">Pts</th>
+                            </tr>
+                        </thead>
+                        <tbody id="standingsTableBody" class="divide-y divide-gray-200 dark:divide-gray-800">
+                            <!-- Dynamic rows injected here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: FIXTURES AND SCHEDULE -->
+            <div class="lg:col-span-5 theme-card rounded-xl p-5 shadow-xl flex flex-col">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lime-600 dark:text-lime-400 font-black text-sm uppercase tracking-wider flex items-center gap-2">
+                        📅 Schedule & Fixtures
+                    </h2>
+                    <select id="matchdaySelect" onchange="changeMatchday(this.value)" class="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs rounded px-2 py-1 font-bold focus:outline-none cursor-pointer text-gray-900 dark:text-white">
+                        <!-- Matchdays filled dynamic here -->
+                    </select>
+                </div>
+
+                <div id="fixturesList" class="space-y-3 flex-1 overflow-y-auto max-h-[500px] pr-1">
+                    <!-- Fixtures injected here -->
+                </div>
+
+                <div id="saveScoresContainer" class="hidden mt-4 pt-3 border-t border-gray-200 dark:border-gray-800">
+                    <button onclick="saveMatchdayScores()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-2.5 rounded shadow transition cursor-pointer uppercase tracking-wider">
+                        Save Matchday Scores
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- PLAYER PROFILE MODAL POPUP -->
+    <div id="profileModal" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex justify-center items-center p-4">
+        <div class="theme-card rounded-xl max-w-md w-full p-6 relative shadow-2xl">
+            <button onclick="closeModal()" class="absolute top-3 right-3 text-custom-muted hover:text-red-500 text-lg font-bold cursor-pointer">&times;</button>
+            <h3 id="modalPlayerName" class="text-xl font-black main-title mb-1">Player Profile</h3>
+            <p class="text-[10px] uppercase tracking-wider text-custom-muted mb-3">League Profile Summary</p>
+            
+            <hr class="border-gray-200 dark:border-gray-700 my-3">
+            
+            <div class="py-4 text-center">
+                <p id="modalTitlesText" class="text-sm font-bold text-yellow-600 dark:text-yellow-400 tracking-wide">
+                    🏆 No previous league titles
+                </p>
+                <p class="text-xs mt-3 font-semibold bg-gray-100 dark:bg-gray-900/50 p-3 rounded-lg border border-gray-200 dark:border-gray-800 text-custom-main">
+                    League statistics processed instantly in primary terminal view.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- CORE DATA & LOGIC ENGINE -->
+    <script>
+        /* --- STATE_SNAPSHOT_START --- */
+        let players = [
+            { id: 1, name: "Player 1", p: 0, w: 0, d: 0, l: 0, gd: 0, pts: 0, titles: "🏆 No previous league titles" },
+            { id: 2, name: "Player 2", p: 0, w: 0, d: 0, l: 0, gd: 0, pts: 0, titles: "🏆 No previous league titles" },
+            { id: 3, name: "Player 3", p: 0, w: 0, d: 0, l: 0, gd: 0, pts: 0, titles: "🏆 No previous league titles" },
+            { id: 4, name: "Player 4", p: 0, w: 0, d: 0, l: 0, gd: 0, pts: 0, titles: "🏆 No previous league titles" }, 
+            { id: 5, name: "Player 5", p: 0, w: 0, d: 0, l: 0, gd: 0, pts: 0, titles: "🏆 No previous league titles" },
+            { id: 6, name: "Player 6", p: 0, w: 0, d: 0, l: 0, gd: 0, pts: 0, titles: "🏆 No previous league titles" },
+            { id: 7, name: "Player 7", p: 0, w: 0, d: 0, l: 0, gd: 0, pts: 0, titles: "🏆 No previous league titles" },
+            { id: 8, name: "Player 8", p: 0, w: 0, d: 0, l: 0, gd: 0, pts: 0, titles: "🏆 No previous league titles" },
+            { id: 9, name: "Player 9", p: 0, w: 0, d: 0, l: 0, gd: 0, pts: 0, titles: "🏆 No previous league titles" },
+            { id: 10, name: "Player 10", p: 0, w: 0, d: 0, l: 0, gd: 0, pts: 0, titles: "🏆 No previous league titles" }
+        ];
+        let fixtures = null;
+        let currentMatchday = 1;
+        /* --- STATE_SNAPSHOT_END --- */
+
+        let isAdminActive = false;
+
+        function initFixtures() {
+            if (fixtures !== null && Object.keys(fixtures).length > 0) {
+                return;
+            }
+            
+            fixtures = {};
+            let numPlayers = players.length;
+            let totalMatchdays = numPlayers - 1;
+            let matchesPerDay = numPlayers / 2;
+            let tempPlayers = players.map(p => p.id);
+
+            for (let day = 1; day <= totalMatchdays; day++) {
+                fixtures[day] = [];
+                for (let i = 0; i < matchesPerDay; i++) {
+                    let home = tempPlayers[i];
+                    let away = tempPlayers[numPlayers - 1 - i];
+                    fixtures[day].push({
+                        homeId: home,
+                        awayId: away,
+                        homeScore: null,
+                        awayScore: null
+                    });
+                }
+                tempPlayers.splice(1, 0, tempPlayers.pop());
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initFixtures();
+            buildMatchdayDropdown();
+            renderRosterInputs();
+            calculateAndRenderHub();
+        });
+
+        function toggleTheme() {
+            const body = document.body;
+            if (body.classList.contains('dark')) {
+                body.classList.remove('dark');
+                document.documentElement.classList.remove('dark');
+            } else {
+                body.classList.add('dark');
+                document.documentElement.classList.add('dark');
+            }
+        }
+
+        function buildMatchdayDropdown() {
+            const select = document.getElementById('matchdaySelect');
+            select.innerHTML = '';
+            let totalMatchdays = players.length - 1;
+            for (let m = 1; m <= totalMatchdays; m++) {
+                let opt = document.createElement('option');
+                opt.value = m;
+                opt.innerText = `Matchday ${m}`;
+                select.appendChild(opt);
+            }
+            select.value = currentMatchday;
+        }
+
+        function changeMatchday(val) {
+            currentMatchday = parseInt(val);
+            renderFixturesList();
+        }
+
+        function toggleAdminMode() {
+            if (isAdminActive) {
+                exitAdmin();
+                return;
+            }
+            let passwordInput = prompt("Enter secure admin authentication credentials code:");
+            if (passwordInput === "edn2026") {
+                isAdminActive = true;
+                document.getElementById('adminBar').classList.remove('hidden');
+                document.getElementById('rosterManager').classList.remove('hidden');
+                document.getElementById('saveScoresContainer').classList.remove('hidden');
+                renderFixturesList();
+            } else if (passwordInput !== null) {
+                alert("Invalid configuration permission denied.");
+            }
+        }
+
+        function exitAdmin() {
+            isAdminActive = false;
+            document.getElementById('adminBar').classList.add('hidden');
+            document.getElementById('rosterManager').classList.add('hidden');
+            document.getElementById('saveScoresContainer').classList.add('hidden');
+            renderFixturesList();
+        }
+
+        function renderRosterInputs() {
+            const container = document.getElementById('rosterInputsGrid');
+            container.innerHTML = '';
+            players.forEach(p => {
+                let wrapper = document.createElement('div');
+                wrapper.className = 'flex items-center gap-1.5 bg-gray-100 dark:bg-gray-900/30 border border-gray-300 dark:border-gray-800 rounded p-1.5';
+                wrapper.innerHTML = `
+                    <span class="text-[10px] text-custom-muted font-bold w-7">ID ${p.id}</span>
+                    <input type="text" id="rosterInput-${p.id}" value="${p.name}" class="w-full bg-white text-gray-900 dark:bg-gray-800 dark:text-white text-xs px-2 py-1 rounded focus:outline-none focus:border-cyan-500 border border-gray-300 dark:border-transparent">
+                `;
+                container.appendChild(wrapper);
+            });
+        }
+
+        function saveRosterNames() {
+            players.forEach(p => {
+                const inputVal = document.getElementById(`rosterInput-${p.id}`).value.trim();
+                if (inputVal !== "") {
+                    p.name = inputVal;
+                }
+            });
+            alert("Roster configuration settings updated successfully!");
+            calculateAndRenderHub();
+        }
+
+        function calculateAndRenderHub() {
+            players.forEach(p => {
+                p.p = 0; p.w = 0; p.d = 0; p.l = 0; p.gd = 0; p.pts = 0;
+            });
+
+            Object.keys(fixtures).forEach(day => {
+                fixtures[day].forEach(match => {
+                    if (match.homeScore !== null && match.awayScore !== null) {
+                        let h = players.find(p => p.id === match.homeId);
+                        let a = players.find(p => p.id === match.awayId);
+
+                        if (h && a) {
+                            h.p++; a.p++;
+                            let hScore = parseInt(match.homeScore);
+                            let aScore = parseInt(match.awayScore);
+
+                            h.gd += (hScore - aScore);
+                            a.gd += (aScore - hScore);
+
+                            if (hScore > aScore) {
+                                h.w++; h.pts += 3;
+                                a.l++;
+                            } else if (hScore < aScore) {
+                                a.w++; a.pts += 3;
+                                h.l++;
+                            } else {
+                                h.d++; h.pts += 1;
+                                a.d++; a.pts += 1;
+                            }
+                        }
+                    }
+                });
+            });
+
+            let sortedPlayers = [...players].sort((x, y) => {
+                if (y.pts !== x.pts) return y.pts - x.pts;
+                if (y.gd !== x.gd) return y.gd - x.gd;
+                return y.w - x.w;
+            });
+
+            const tbody = document.getElementById('standingsTableBody');
+            tbody.innerHTML = '';
+
+            sortedPlayers.forEach((p, idx) => {
+                let tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-200/50 dark:hover:bg-gray-800/40 transition cursor-pointer font-medium";
+                tr.onclick = () => openPlayerProfile(p.id);
+                tr.innerHTML = `
+                    <td class="py-3 px-2 text-center font-bold text-custom-muted">${idx + 1}</td>
+                    <td class="py-3 px-3 font-semibold text-custom-main">${p.name}</td>
+                    <td class="py-3 px-2 text-center text-custom-muted">${p.p}</td>
+                    <td class="py-3 px-2 text-center text-custom-muted">${p.w}</td>
+                    <td class="py-3 px-2 text-center text-custom-muted">${p.d}</td>
+                    <td class="py-3 px-2 text-center text-custom-muted">${p.l}</td>
+                    <td class="py-3 px-2 text-center ${p.gd > 0 ? 'text-blue-500 font-bold' : p.gd < 0 ? 'text-red-500 font-bold' : 'text-custom-muted'}">${p.gd > 0 ? '+' + p.gd : p.gd}</td>
+                    <td class="py-3 px-2 text-center text-green-600 dark:text-green-400 font-extrabold text-base">${p.pts}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            renderFixturesList();
+        }
+
+        function renderFixturesList() {
+            const listContainer = document.getElementById('fixturesList');
+            listContainer.innerHTML = '';
+
+            let currentDayMatches = fixtures[currentMatchday] || [];
+
+            currentDayMatches.forEach((match, index) => {
+                let homePlayer = players.find(p => p.id === match.homeId)?.name || `Unknown (${match.homeId})`;
+                let awayPlayer = players.find(p => p.id === match.awayId)?.name || `Unknown (${match.awayId})`;
+
+                let matchRow = document.createElement('div');
+                matchRow.className = "flex items-center justify-between p-3 fixture-row rounded-lg shadow-sm text-xs md:text-sm font-semibold";
+
+                if (isAdminActive) {
+                    let hVal = match.homeScore !== null ? match.homeScore : '';
+                    let aVal = match.awayScore !== null ? match.awayScore : '';
+                    matchRow.innerHTML = `
+                        <div class="w-[40%] text-left truncate text-custom-main">${homePlayer}</div>
+                        <div class="flex items-center gap-1 justify-center w-[20%]">
+                            <input type="number" min="0" value="${hVal}" id="scoreHome-${index}" class="w-10 text-center bg-white text-gray-900 dark:bg-gray-800 dark:text-white rounded py-1 border border-pink-500 font-bold focus:outline-none">
+                            <span class="text-custom-muted">-</span>
+                            <input type="number" min="0" value="${aVal}" id="scoreAway-${index}" class="w-10 text-center bg-white text-gray-900 dark:bg-gray-800 dark:text-white rounded py-1 border border-pink-500 font-bold focus:outline-none">
+                        </div>
+                        <div class="w-[40%] text-right truncate text-custom-main">${awayPlayer}</div>
+                    `;
+                } else {
+                    let isPlayed = match.homeScore !== null && match.awayScore !== null;
+                    let displayScore = isPlayed ? 
+                        `<span class="bg-gray-200 dark:bg-gray-800 px-2.5 py-1 rounded text-yellow-600 dark:text-yellow-400 font-extrabold tracking-wider border border-gray-300 dark:border-gray-700">${match.homeScore} - ${match.awayScore}</span>` : 
+                        `<span class="vs-badge px-3 py-1 rounded text-[10px] font-black uppercase">VS</span>`;
+                    
+                    matchRow.innerHTML = `
+                        <div class="w-[40%] text-left truncate text-custom-main">${homePlayer}</div>
+                        <div class="w-[20%] text-center flex justify-center">${displayScore}</div>
+                        <div class="w-[40%] text-right truncate text-custom-main">${awayPlayer}</div>
+                    `;
+                }
+                listContainer.appendChild(matchRow);
+            });
+        }
+
+        function saveMatchdayScores() {
+            let currentDayMatches = fixtures[currentMatchday] || [];
+            currentDayMatches.forEach((match, index) => {
+                let hInput = document.getElementById(`scoreHome-${index}`).value;
+                let aInput = document.getElementById(`scoreAway-${index}`).value;
+
+                if (hInput.trim() !== "" && aInput.trim() !== "") {
+                    match.homeScore = parseInt(hInput);
+                    match.awayScore = parseInt(aInput);
+                } else {
+                    match.homeScore = null;
+                    match.awayScore = null;
+                }
+            });
+            alert(`Matchday ${currentMatchday} scores saved!`);
+            calculateAndRenderHub();
+        }
+
+        function openPlayerProfile(id) {
+            let targetPlayer = players.find(p => p.id === id);
+            if (!targetPlayer) return;
+
+            document.getElementById('modalPlayerName').innerText = targetPlayer.name;
+            document.getElementById('modalTitlesText').innerText = targetPlayer.titles || "🏆 No previous league titles";
+            document.getElementById('profileModal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('profileModal').classList.add('hidden');
+        }
+
+        function exportHtmlFile() {
+            let fullHtmlSource = document.documentElement.outerHTML;
+
+            let cleanDocumentMarkup = fullHtmlSource
+                .replace('id="adminBar" class="', 'id="adminBar" class="hidden ')
+                .replace('id="rosterManager" class="', 'id="rosterManager" class="hidden ')
+                .replace('id="saveScoresContainer" class="', 'id="saveScoresContainer" class="hidden ');
+
+            let freshStateBlock = `/* --- STATE_SNAPSHOT_START --- */\n        let players = ${JSON.stringify(players, null, 12)};\n        let fixtures = ${JSON.stringify(fixtures, null, 12)};\n        let currentMatchday = ${currentMatchday};\n        /* --- STATE_SNAPSHOT_END --- */`;
+
+            let snapshotRegex = /\/\* --- STATE_SNAPSHOT_START --- \*\/[\s\S]*?\/\* --- STATE_SNAPSHOT_END --- \*\//;
+            let finalExportOutput = cleanDocumentMarkup.replace(snapshotRegex, freshStateBlock);
+
+            let blob = new Blob([`<!DOCTYPE html>\n` + finalExportOutput], { type: "text/html;charset=utf-8" });
+            let link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "index.html";
+            link.click();
+        }
+    </script>
+</body>
+</html>
